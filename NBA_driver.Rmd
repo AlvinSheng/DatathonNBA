@@ -4,6 +4,14 @@ output:
   output: github_document
 ---
 
+General To-Do
+
+* Merge the Datasets!
+* Data Cleaning
+    * Some rows in Seasons_Stats have nothing in them but the index--remove!
+        * Did Pancake do this yet?
+
+
 Statistical Analysis Ideas:
 
 * Multivariate Analysis
@@ -11,6 +19,8 @@ Statistical Analysis Ideas:
     * PCA
 * Inference
     * Missing Data
+    * MLR plus model selection
+    * Correlations
 * Prediction
     * Random Forest
     * Cross-Validation
@@ -18,12 +28,110 @@ Statistical Analysis Ideas:
         * Elastic-Net Regularization
 * Other relevant stuff Tianyi cited
 
+
+
+```{r}
+library(ggplot2)
+library(scatterplot3d)
+```
+
 ```{r}
 sal_1718 <- read.csv("NBA_season1718_salary.csv")
 sal_1819 <- read.csv("NBA_season1819_salary.csv")
-player_pos <- read.csv("player_data.csv")
-player_birth <- read.csv("Players.csv")
+player_data <- read.csv("player_data.csv")
+Players <- read.csv("Players.csv")
 season <- read.csv("Seasons_Stats.csv")
 ```
 
+# Merge the Data
+
+## Salary with season, for years 
+
+```{r}
+sal_season <- merge(sal_1718[,c(-1)], season[season$Year == 2017,c(-1)], by = c("Player", "Tm"))
+```
+<!-- After merging, do 3d scatterplot of salary vs. other stuff -->
+
+# Linear Model
+
+Beware--some names appear twice--autocorrelation
+```{r}
+sal_lm <- lm(season17_18 ~ ., data = sal_season[c()])
+```
+<!-- elastic-net regularize this -->
+
+# Exploration of the salary files
+
+## Exploration of sal_1718
+
+```{r}
+hist(sal_1718$season17_18)
+
+hist(sal_1819$seson18_19)
+```
+
+# Exploratory Data Analysis of Seasons_Stats
+
+```{r}
+sub_idx <- sample(nrow(season), size = 1000)
+
+sub_season <- season[sub_idx,]
+```
+
+<!-- So the year only goes up to 2017. Which salary season does it correspond to? Just use the 18-19 season  -->
+```{r}
+summary(season)
+
+str(season)
+```
+
+## 3d scatterplots
+
+```{r}
+s3d_1 <- scatterplot3d(x = season$Age[season$Pos == "C"], y = season$MP[season$Pos == "C"], z = season$TS.[season$Pos == "C"], type = "p", color = 1)
+
+positions <- levels(season$Pos)[3:24]
+index <- 2
+
+for (pos in positions) {
+  s3d_1$points3d(x = season$Age[season$Pos == pos], y = season$MP[season$Pos == pos], z = season$TS.[season$Pos == pos], type = "p", col = index)
+  index = index + 1
+}
+```
+
+
+
+```{r}
+s3d_1 <- scatterplot3d(x = sub_season$Age[sub_season$Pos == "C"], y = sub_season$MP[sub_season$Pos == "C"], z = sub_season$TS.[sub_season$Pos == "C"], type = "p", color = 1)
+
+positions <- levels(sub_season$Pos)[3:24]
+index <- 2
+
+for (pos in positions) {
+  s3d_1$points3d(x = sub_season$Age[sub_season$Pos == pos], y = sub_season$MP[sub_season$Pos == pos], z = sub_season$TS.[sub_season$Pos == pos], type = "p", col = index)
+  index = index + 1
+}
+
+
+```
+
+```{r}
+s3d_1 <- scatterplot3d(x = sal_season$Age[sal_season$Pos == "C"], y = sal_season$MP[sal_season$Pos == "C"], z = sal_season$season17_18[sal_season$Pos == "C"], type = "p", color = 1, xlab = "Age", ylab = "Minutes Played", zlab = "Salary")
+
+positions <- levels(sal_season$Pos)[3:24]
+index <- 2
+
+for (pos in positions) {
+  s3d_1$points3d(x = sal_season$Age[sal_season$Pos == pos], y = sal_season$MP[sal_season$Pos == pos], z = sal_season$season17_18[sal_season$Pos == pos], type = "p", col = index)
+  index = index + 1
+}
+```
+
+
+
+## Principal Components Analysis
+
+```{r}
+
+```
 
