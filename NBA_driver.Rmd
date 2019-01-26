@@ -5,6 +5,7 @@ output:
 ---
 
 Statistical Analysis Ideas:
+
 * Multivariate Analysis
     * Cluster Analysis
     * PCA

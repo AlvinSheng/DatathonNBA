@@ -1,7 +1,19 @@
 Driver
 ================
 
-Statistical Analysis Ideas: \* Multivariate Analysis \* Cluster Analysis \* PCA \* Inference \* Missing Data \* Prediction \* Random Forest \* Cross-Validation \* Model Selection \* Elastic-Net Regularization \* Other relevant stuff Tianyi cited
+Statistical Analysis Ideas:
+
+-   Multivariate Analysis
+    -   Cluster Analysis
+    -   PCA
+-   Inference
+    -   Missing Data
+-   Prediction
+    -   Random Forest
+    -   Cross-Validation
+    -   Model Selection
+        -   Elastic-Net Regularization
+-   Other relevant stuff Tianyi cited
 
 ``` r
 sal_1718 <- read.csv("NBA_season1718_salary.csv")
