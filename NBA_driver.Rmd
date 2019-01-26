@@ -4,35 +4,37 @@ output:
   output: github_document
 ---
 
-General To-Do
+<!-- General To-Do -->
 
-* Merge the Datasets!
-* Data Cleaning
-    * Some rows in Seasons_Stats have nothing in them but the index--remove!
-        * Did Pancake do this yet?
+<!-- * Merge the Datasets! -->
+<!-- * Data Cleaning -->
+<!--     * Some rows in Seasons_Stats have nothing in them but the index--remove -->
 
 
-Statistical Analysis Ideas:
+<!-- Statistical Analysis Ideas: -->
 
-* Multivariate Analysis
-    * Cluster Analysis
-    * PCA
-* Inference
-    * Missing Data
-    * MLR plus model selection
-    * Correlations
-* Prediction
-    * Random Forest
-    * Cross-Validation
-    * Model Selection
-        * Elastic-Net Regularization
-* Other relevant stuff Tianyi cited
+<!-- * Multivariate Analysis -->
+<!--     * Cluster Analysis -->
+<!--     * PCA -->
+<!-- * Data Visualization -->
+<!--     * Make a creative, "original" plot--perhaps use grid?  -->
+<!-- * Inference -->
+<!--     * Missing Data -->
+<!--     * MLR plus model selection -->
+<!--     * Correlations!!!!!!!!!! Make plots, do PCA -->
+<!-- * Prediction -->
+<!--     * Random Forest -->
+<!--     * Cross-Validation -->
+<!--     * Model Selection -->
+<!--         * Elastic-Net Regularization -->
+<!-- * Other relevant stuff Tianyi cited -->
 
 
 
 ```{r}
 library(ggplot2)
 library(scatterplot3d)
+library(glmnet)
 ```
 
 ```{r}
@@ -48,17 +50,111 @@ season <- read.csv("Seasons_Stats.csv")
 ## Salary with season, for years 
 
 ```{r}
-sal_season <- merge(sal_1718[,c(-1)], season[season$Year == 2017,c(-1)], by = c("Player", "Tm"))
+# getting rid of index in both datasets
+# getting rid of two blank columns in season data set, as well as Year, since it'll all be 2017
+sal_season <- merge(sal_1718[,c(-1)], season[season$Year == 2017,-c(1, 2, 22, 27)], by = c("Player", "Tm"))
 ```
 <!-- After merging, do 3d scatterplot of salary vs. other stuff -->
 
 # Linear Model
 
-Beware--some names appear twice--autocorrelation
+## Correlation Analysis
+
 ```{r}
-sal_lm <- lm(season17_18 ~ ., data = sal_season[c()])
+sal_season_mat <- model.matrix(~ ., sal_season[,-1])[,-1]
+
+cor(sal_season, method = "spearman")
+```
+
+## Graphics
+
+Scatterplots between salary and arbitrarily chosen predictors
+```{r}
+plot(sal_season$Age, sal_season$season17_18)
+
+plot(sal_season$FTr, sal_season$season17_18)
+
+plot(sal_season$STL., sal_season$season17_18)
+
+plot(sal_season$WS, sal_season$season17_18)
+
+plot(sal_season$FGA, sal_season$season17_18)
+
+plot(sal_season$X2P., sal_season$season17_18)
+
+plot(sal_season$TRB, sal_season$season17_18)
+
+plot(sal_season$PF, sal_season$season17_18)
+```
+
+log-transforming salary
+```{r}
+plot(sal_season$Age, log(sal_season$season17_18))
+
+plot(sal_season$FTr, log(sal_season$season17_18))
+
+plot(sal_season$STL., log(sal_season$season17_18))
+
+plot(sal_season$WS, log(sal_season$season17_18))
+
+plot(sal_season$FGA, log(sal_season$season17_18))
+
+plot(sal_season$X2P., log(sal_season$season17_18))
+
+plot(sal_season$TRB, log(sal_season$season17_18))
+
+plot(sal_season$PF, log(sal_season$season17_18))
+```
+
+Pairwise Plots
+```{r}
+pairs(~ ., data = sal_season[,-c(1, 2, 4, 9:50)])
+
+pairs(~ ., data = sal_season[,-c(1:8, 15:50)])
+
+# pairs(~ ., data = sal_season[,-c(1:8, 15:50)])
+# 
+# pairs(~ ., data = sal_season[,-c(1, 2, 3, 4, 5:26)])
+# 
+# pairs(~ ., data = sal_season[,-c(1, 2, 4, 27:50)])
+# 
+# pairs(~ ., data = sal_season[,-c(1, 2, 3, 4, 5:26)])
+# 
+# pairs(~ ., data = sal_season[,-c(1, 2, 3, 4, 5:26)])
+# 
+# pairs(~ ., data = sal_season[,-c(1, 2, 3, 4, 5:26)])
+```
+
+## Model
+
+Ersan Ilyasova appears twice in the data
+```{r}
+sal_lm <- lm(season17_18 ~ ., data = sal_season[,-1]) 
+# taking out the Player name as a predictor
+
+# sal_lm_log <- lm(log(season17_18) ~ ., data = sal_season[,-1]) 
 ```
 <!-- elastic-net regularize this -->
+
+```{r}
+summary(sal_lm)
+```
+
+```{r}
+plot(sal_lm$fitted.values, rstandard(sal_lm), main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Standardized Residuals")
+abline(h = 0, col = "red")
+
+# plot(sal_lm_log$fitted.values, rstandard(sal_lm_log), main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Standardized Residuals")
+# abline(h = 0, col = "red")
+```
+Looks screwy. Let's log-transform the data--looking on kaggle, other ppl didn't do it
+
+## Elastic-Net Regularization
+
+```{r}
+
+```
+
 
 # Exploration of the salary files
 
