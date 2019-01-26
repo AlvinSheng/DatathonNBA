@@ -204,15 +204,41 @@ plot(cv_lm$glmnet.fit, label = TRUE)
 plot(cv_lm)
 
 
-coef(cv_lm, s = cv_lm$lambda.1se)
+coef(cv_lm, s = cv_lm$lambda.min)
 ```
 
 ## Constructing LM from the elastic-net regularization 
 
 ```{r}
+TmBOS <- ifelse(sal_season$Tm == "BOS", 1, 0)
+TmBRK <- ifelse(sal_season$Tm == "BRK", 1, 0)
+TmCHI <- ifelse(sal_season$Tm == "CHI", 1, 0)
 TmCLE <- ifelse(sal_season$Tm == "CLE", 1, 0)
+TmDAL <- ifelse(sal_season$Tm == "DAL", 1, 0)
+TmGSW <- ifelse(sal_season$Tm == "GSW", 1, 0)
+TmHOU <- ifelse(sal_season$Tm == "HOU", 1, 0)
+TmIND <- ifelse(sal_season$Tm == "IND", 1, 0)
+TmLAC <- ifelse(sal_season$Tm == "LAC", 1, 0)
+TmLAL <- ifelse(sal_season$Tm == "LAL", 1, 0)
+TmMEM <- ifelse(sal_season$Tm == "MEM", 1, 0)
+TmMIA <- ifelse(sal_season$Tm == "MIA", 1, 0)
+TmMIN <- ifelse(sal_season$Tm == "MIN", 1, 0)
+TmNOP <- ifelse(sal_season$Tm == "NOP", 1, 0)
+TmOKC <- ifelse(sal_season$Tm == "OKC", 1, 0)
+TmORL <- ifelse(sal_season$Tm == "ORL", 1, 0)
+TmPHI <- ifelse(sal_season$Tm == "PHI", 1, 0)
+TmPOR <- ifelse(sal_season$Tm == "POR", 1, 0)
+TmSAC <- ifelse(sal_season$Tm == "SAC", 1, 0)
+TmSAS <- ifelse(sal_season$Tm == "SAS", 1, 0)
+TmTOR <- ifelse(sal_season$Tm == "TOR", 1, 0)
+TmUTA <- ifelse(sal_season$Tm == "UTA", 1, 0)
+TmWAS <- ifelse(sal_season$Tm == "WAS", 1, 0)
 
-sal_lm_en <- lm(season17_18 ~ TmCLE + Age + GS + USG. + DWS + WS + VORP + X3P + PTS, data = sal_season)
+PosPG <- ifelse(sal_season$Pos == "PG", 1, 0)
+PosSF <- ifelse(sal_season$Pos == "SF", 1, 0)
+PosSG <- ifelse(sal_season$Pos == "SG", 1, 0)
+
+sal_lm_en <- lm(season17_18 ~ TmBOS + TmBRK + TmCHI + TmCLE + TmDAL + TmGSW + TmHOU + TmIND + TmLAC + TmLAL + TmMEM + TmMIA + TmMIN + TmNOP + TmOKC + TmORL + TmPHI + TmPOR + TmSAC + TmSAS + TmTOR + TmTOR + TmUTA + TmWAS + PosPG + PosSF + PosSG + Age + G + GS + TS. + X3PAr + STL. + USG. + DWS + WS + X3P + X3P. + X2P. + FT. + AST + PF, data = sal_season)
 ```
 
 ```{r}
@@ -320,14 +346,114 @@ for (pos in positions) {
 ## Principal Components Analysis
 
 ```{r}
-pr.out <- prcomp(sal_season_mat[-which(colSums(sal_season_mat) == 0)], scale = TRUE) 
+pr.out <- prcomp(sal_season_mat[,-which(colSums(sal_season_mat) == 0)], scale = TRUE) 
 # remember, sal_season_mat doesn't have the dependent variable. 
 # therefore, the principal components can be used to predict the dependent variable
 # -which... takes out rows with no zeros
 ```
 
 ```{r}
+pc_dat <- pr.out$x
 
+
+```
+
+```{r}
+sal_st <- (sal - mean(sal)) / sd(sal)
+
+s3d_pc <- scatterplot3d(x = pc_dat[sal_season_mat[,"TmBOS"] == 1,1], y = pc_dat[sal_season_mat[,"TmBOS"] == 1,2], z = sal_st[sal_season_mat[,"TmBOS"] == 1], type = "p", color = 1, xlab = "PC1", ylab = "PC2", zlab = "Standardized Salary", z.ticklabs = NULL)
+
+teams <- colnames(sal_season_mat)[2:24]
+index <- 2
+
+for (tm in teams) {
+  s3d_pc$points3d(x = pc_dat[sal_season_mat[,tm] == 1,1], y = pc_dat[sal_season_mat[,tm] == 1,2], z = sal_st[sal_season_mat[,tm] == 1], col = index)
+  index = index + 1
+}
+```
+
+<!-- ```{r} -->
+<!-- pr.out$rotation -->
+<!-- ``` -->
+
+
+
+## Model
+
+```{r}
+sal_lm_pc <- lm(sal ~ ., data = as.data.frame(pc_dat))
+
+# taking out the Player name as a predictor
+
+# sal_lm_log <- lm(log(season17_18) ~ ., data = sal_season[,-1]) 
+```
+<!-- elastic-net regularize this -->
+
+```{r}
+summary(sal_lm_pc)
+```
+
+```{r}
+plot(sal_lm_pc$fitted.values, rstandard(sal_lm_pc), main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Standardized Residuals")
+abline(h = 0, col = "red")
+
+# plot(sal_lm_log$fitted.values, rstandard(sal_lm_log), main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Standardized Residuals")
+# abline(h = 0, col = "red")
+```
+
+## Elastic-Net Regularization
+
+Finding the optimal alpha
+```{r}
+set.seed(1262019)
+n <- nrow(sal_season_mat)
+# Determining a random foldid
+foldid <- sample(1:10, # default is 10 folds
+                 size = n,
+                 replace = TRUE
+                 )
+
+# Sequence of alphas to test
+alphas <- seq(0, 1, by = .05)
+
+devs <- rep(0, length(alphas))
+
+for (i in 1:length(alphas)) {
+cv <- cv.glmnet(pc_dat, sal, foldid = foldid, alpha = alphas[i], keep = TRUE)
+  devs[i] <- min(cv$cvm)
+}
+
+devs
+```
+alpha of 1 is the best
+
+```{r}
+set.seed(123)
+
+cv_lm <- cv.glmnet(pc_dat, sal, alpha = 1)
+```
+
+```{r}
+plot(cv_lm$glmnet.fit, label = TRUE)
+plot(cv_lm)
+
+
+coef(cv_lm, s = cv_lm$lambda.min)
+```
+
+## Constructing LM from the elastic-net regularization 
+
+```{r}
+sal_lm_en_pc <- lm(sal ~ PC1 + PC2 + PC6 + PC7 + PC8 + PC10 + PC13 + PC19 + PC22 + PC27 + PC28 + PC29 + PC31 + PC32 + PC34 + PC37+ PC41 + PC43 + PC44 + PC45 + PC46 + PC51 + PC52 + PC53 + PC57 + PC60 + PC61 + PC63 + PC64 + PC66+ PC70 + PC72 + PC73 + PC74+ PC78 + PC79, data = as.data.frame(pc_dat))
+```
+
+```{r}
+summary(sal_lm_en_pc)
+```
+
+```{r}
+plot(sal_lm_en_pc$fitted.values, rstandard(sal_lm_en_pc), main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Standardized Residuals")
+abline(h = 0, col = "red")
 ```
 
 
