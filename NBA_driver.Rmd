@@ -196,7 +196,7 @@ alpha of 1 is the best--just use alpha = .95 to strike a balance b/w ridge and l
 ```{r}
 set.seed(123)
 
-cv_lm <- cv.glmnet(sal_season_mat, sal, family = "gaussian", alpha = .95)
+cv_lm <- cv.glmnet(sal_season_mat, sal, family = "gaussian", alpha = 1)
 ```
 
 ```{r}
@@ -206,6 +206,19 @@ plot(cv_lm)
 
 coef(cv_lm, s = cv_lm$lambda.1se)
 ```
+
+## Constructing LM from the elastic-net regularization 
+
+```{r}
+TmCLE <- ifelse(sal_season$Tm == "CLE", 1, 0)
+
+sal_lm_en <- lm(season17_18 ~ TmCLE + Age + GS + USG. + DWS + WS + VORP + X3P + PTS, data = sal_season)
+```
+
+```{r}
+summary(sal_lm_en)
+```
+
 
 ## Plots based on model
 
