@@ -226,21 +226,6 @@ for (pos in positions) {
 ```
 
 
-
-```{r}
-s3d_1 <- scatterplot3d(x = sub_season$Age[sub_season$Pos == "C"], y = sub_season$MP[sub_season$Pos == "C"], z = sub_season$TS.[sub_season$Pos == "C"], type = "p", color = 1)
-
-positions <- levels(sub_season$Pos)[3:24]
-index <- 2
-
-for (pos in positions) {
-  s3d_1$points3d(x = sub_season$Age[sub_season$Pos == pos], y = sub_season$MP[sub_season$Pos == pos], z = sub_season$TS.[sub_season$Pos == pos], type = "p", col = index)
-  index = index + 1
-}
-
-
-```
-
 ```{r}
 s3d_1 <- scatterplot3d(x = sal_season$Age[sal_season$Pos == "C"], y = sal_season$MP[sal_season$Pos == "C"], z = sal_season$season17_18[sal_season$Pos == "C"], type = "p", color = 1, xlab = "Age", ylab = "Minutes Played", zlab = "Salary")
 
@@ -295,12 +280,28 @@ summary(season)
 str(season)
 ```
 
+## 3d Scatterplot of subseason
 
+```{r}
+s3d_1 <- scatterplot3d(x = sub_season$Age[sub_season$Pos == "C"], y = sub_season$MP[sub_season$Pos == "C"], z = sub_season$TS.[sub_season$Pos == "C"], type = "p", color = 1)
+
+positions <- levels(sub_season$Pos)[3:24]
+index <- 2
+
+for (pos in positions) {
+  s3d_1$points3d(x = sub_season$Age[sub_season$Pos == pos], y = sub_season$MP[sub_season$Pos == pos], z = sub_season$TS.[sub_season$Pos == pos], type = "p", col = index)
+  index = index + 1
+}
+
+
+```
 
 ## Principal Components Analysis
 
 ```{r}
-
+pr.out <- prcomp(sal_season_mat, scale = TRUE) 
+# remember, sal_season_mat doesn't have the dependent variable. 
+# therefore, the principal components can be used to predict the dependent variable
 ```
 
 
