@@ -185,7 +185,7 @@ alphas <- seq(0, 1, by = .05)
 devs <- rep(0, length(alphas))
 
 for (i in 1:length(alphas)) {
-cv <- cv.glmnet(sal_season_mat, sal, family = "gaussian", foldid = foldid, alpha = alphas[i], keep = TRUE)
+cv <- cv.glmnet(sal_season_mat, sal, foldid = foldid, alpha = alphas[i], keep = TRUE)
   devs[i] <- min(cv$cvm)
 }
 
@@ -196,7 +196,7 @@ alpha of 1 is the best--just use alpha = .95 to strike a balance b/w ridge and l
 ```{r}
 set.seed(123)
 
-cv_lm <- cv.glmnet(sal_season_mat, sal, family = "gaussian", alpha = 1)
+cv_lm <- cv.glmnet(sal_season_mat, sal, alpha = 1)
 ```
 
 ```{r}
@@ -217,6 +217,11 @@ sal_lm_en <- lm(season17_18 ~ TmCLE + Age + GS + USG. + DWS + WS + VORP + X3P + 
 
 ```{r}
 summary(sal_lm_en)
+```
+
+```{r}
+plot(sal_lm_en$fitted.values, rstandard(sal_lm_en), main = "Residuals vs. Fitted Values", xlab = "Fitted Values", ylab = "Standardized Residuals")
+abline(h = 0, col = "red")
 ```
 
 
