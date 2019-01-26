@@ -17,7 +17,10 @@ output:
 <!--     * Cluster Analysis -->
 <!--     * PCA -->
 <!-- * Data Visualization -->
-<!--     * Make a creative, "original" plot--perhaps use grid?  -->
+    <!-- * Make a creative, "original" plot--perhaps use grid? -->
+    <!-- * Make 3-d plot interactive! -->
+    <!-- * trellis plots to combine the variables -->
+    <!--     * Cleveland Caveliers vs. other teams, and other variables  -->
 <!-- * Inference -->
 <!--     * Missing Data -->
 <!--     * MLR plus model selection -->
@@ -61,10 +64,22 @@ sal_season <- merge(sal_1718[,c(-1)], season[season$Year == 2017,-c(1, 2, 22, 27
 ## Correlation Analysis
 
 ```{r}
-sal_season_mat <- model.matrix(~ ., sal_season[,-1])[,-1]
+sal_season_mat <- model.matrix(~ ., sal_season[,c(-1, -3)])[,-1] 
+# inner negatives: remove name and salary (dependent variable). Outer negative: remove intercept
 
-cor(sal_season, method = "spearman")
+sal <- sal_season$season17_18[rowSums(is.na(sal_season)) == 0]
+
+R <- cor(sal_season_mat, method = "spearman")
 ```
+
+```{r, include = FALSE}
+# Which correlations are > .50 (in absolute value) but not 1?
+which(abs(R) > .50 & R != 1, arr.ind = TRUE)
+
+R[which(abs(R) > .50 & R != 1, arr.ind = TRUE)]
+```
+
+Too big of a correlation matrix to display. 
 
 ## Graphics
 
@@ -151,37 +166,52 @@ Looks screwy. Let's log-transform the data--looking on kaggle, other ppl didn't 
 
 ## Elastic-Net Regularization
 
+Finding the optimal alpha
 ```{r}
+set.seed(1262019)
+n <- nrow(sal_season_mat)
+# Determining a random foldid
+foldid <- sample(1:10, # default is 10 folds
+                 size = n,
+                 replace = TRUE
+                 )
 
+# Sequence of alphas to test
+alphas <- seq(0, 1, by = .05)
+
+devs <- rep(0, length(alphas))
+
+for (i in 1:length(alphas)) {
+cv <- cv.glmnet(sal_season_mat, sal, family = "gaussian", foldid = foldid, alpha = alphas[i], keep = TRUE)
+  devs[i] <- min(cv$cvm)
+}
+
+devs
+```
+alpha of 1 is the best--just use alpha = .95 to strike a balance b/w ridge and lasso
+
+```{r}
+set.seed(123)
+
+cv_lm <- cv.glmnet(sal_season_mat, sal, family = "gaussian", alpha = .95)
 ```
 
-
-# Exploration of the salary files
-
-## Exploration of sal_1718
-
 ```{r}
-hist(sal_1718$season17_18)
+plot(cv_lm$glmnet.fit, label = TRUE)
+plot(cv_lm)
 
-hist(sal_1819$seson18_19)
+
+coef(cv_lm, s = cv_lm$lambda.1se)
 ```
 
-# Exploratory Data Analysis of Seasons_Stats
+## Plots based on model
 
 ```{r}
-sub_idx <- sample(nrow(season), size = 1000)
-
-sub_season <- season[sub_idx,]
+plot(sal_season$Age, sal_season$season17_18, col = 6)
+plot(sal_season$PTS, sal_season$season17_18, col = 6)
 ```
 
-<!-- So the year only goes up to 2017. Which salary season does it correspond to? Just use the 18-19 season  -->
-```{r}
-summary(season)
-
-str(season)
-```
-
-## 3d scatterplots
+### 3d scatterplots
 
 ```{r}
 s3d_1 <- scatterplot3d(x = season$Age[season$Pos == "C"], y = season$MP[season$Pos == "C"], z = season$TS.[season$Pos == "C"], type = "p", color = 1)
@@ -225,9 +255,54 @@ for (pos in positions) {
 
 
 
+Factor variable: Team 
+
+```{r}
+s3d_1 <- scatterplot3d(x = sal_season$Age[sal_season$Tm == "ORL"], y = sal_season$PTS[sal_season$Tm == "ORL"], z = sal_season$season17_18[sal_season$Tm == "ORL"], type = "p", color = 1, xlab = "Age", ylab = "PTS", zlab = "Salary")
+
+teams <- levels(sal_season$Tm)[2:24]
+index <- 2
+
+for (tm in teams) {
+  s3d_1$points3d(x = sal_season$Age[sal_season$Tm == tm], y = sal_season$PTS[sal_season$Tm == tm], z = sal_season$season17_18[sal_season$Tm == tm], type = "p", col = index)
+  index = index + 1
+}
+```
+
+
+# Exploration of the salary files
+
+## Exploration of sal_1718
+
+```{r}
+hist(sal_1718$season17_18)
+
+hist(sal_1819$seson18_19)
+```
+
+# Exploratory Data Analysis of Seasons_Stats
+
+```{r}
+sub_idx <- sample(nrow(season), size = 1000)
+
+sub_season <- season[sub_idx,]
+```
+
+<!-- So the year only goes up to 2017. Which salary season does it correspond to? Just use the 18-19 season  -->
+```{r}
+summary(season)
+
+str(season)
+```
+
+
+
 ## Principal Components Analysis
 
 ```{r}
 
 ```
 
+
+
+## Cluster Analysis
