@@ -56,6 +56,8 @@ season <- read.csv("Seasons_Stats.csv")
 # getting rid of index in both datasets
 # getting rid of two blank columns in season data set, as well as Year, since it'll all be 2017
 sal_season <- merge(sal_1718[,c(-1)], season[season$Year == 2017,-c(1, 2, 22, 27)], by = c("Player", "Tm"))
+
+write.csv(sal_season, file = "sal_season.csv")
 ```
 <!-- After merging, do 3d scatterplot of salary vs. other stuff -->
 
@@ -144,7 +146,8 @@ pairs(~ ., data = sal_season[,-c(1:8, 15:50)])
 
 Ersan Ilyasova appears twice in the data
 ```{r}
-sal_lm <- lm(season17_18 ~ ., data = sal_season[,-1]) 
+sal_lm <- lm(season17_18 ~ ., data = sal_season[,-1])
+
 # taking out the Player name as a predictor
 
 # sal_lm_log <- lm(log(season17_18) ~ ., data = sal_season[,-1]) 
@@ -299,9 +302,14 @@ for (pos in positions) {
 ## Principal Components Analysis
 
 ```{r}
-pr.out <- prcomp(sal_season_mat, scale = TRUE) 
+pr.out <- prcomp(sal_season_mat[-which(colSums(sal_season_mat) == 0)], scale = TRUE) 
 # remember, sal_season_mat doesn't have the dependent variable. 
 # therefore, the principal components can be used to predict the dependent variable
+# -which... takes out rows with no zeros
+```
+
+```{r}
+
 ```
 
 
